@@ -10,7 +10,10 @@ def main(args):
     mode = 'otp'
     keyname = 'default'
     for a in args:
-        keyname = a
+        if a.startswith('-'):
+            return usage()
+        else:
+            keyname = a
 
     try:
         key, last_seq = load_key(keyname)
@@ -22,7 +25,17 @@ def main(args):
         save_key(keyname, seq=last_seq+1)
 
     elif mode == 'addkey':
-        add_key(keyname)
+        key, seq = add_key(keyname)
+        if key:
+            print 'Your first OTP is: %s' % (gen_otp(key, seq))
+            save_key(keyname, seq=seq+1)
+
+def usage():
+    print 'Usage: 2fa [NAME]'
+    print 'Generates the next passcode in the sequence for the NAME profile.'
+    print '(will create a new profile on first use)'
+    print 'NAME is optional; will be "default" if not specified.'
+    print 'Key and sequence data are stored in ~/.2fa/'
 
 def load_key(keyname):
     key = open(os.path.join(KEY_DIR, keyname, 'key')).readline().strip()
@@ -41,7 +54,9 @@ def save_key(keyname, key=None, seq=None):
         open(os.path.join(KEY_DIR, keyname, 'seq'), 'w').write(str(seq))
 
 def add_key(keyname):
-    print 'Adding a key for "%s" profile.' % (keyname)
+    usage()
+    print
+    print 'Creating profile "%s".' % (keyname)
     key = raw_input('Paste the shared AES key from SSO: ')
     key = key.strip().replace(' ', '')
     seq = 0
