@@ -1,7 +1,11 @@
 #!/usr/bin/env python
 
+"""2fa.py, an easy wrapper for oathtool, to generate one-time passwords.
+Manages AES key storage and sequence counting.
+"""
+
 import os
-import subprocess
+import subprocess  # Requires Python 2.7
 
 OATHTOOL = 'oathtool'
 KEY_DIR = os.path.join(os.environ['HOME'], '.2fa')
