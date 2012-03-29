@@ -67,7 +67,16 @@ def add_key(keyname):
     save_key(keyname, key, seq)
     return key, seq
 
+def check_oathtool_binary():
+    try:
+        subprocess.check_output(["which", OATHTOOL])
+    except subprocess.CalledProcessError:
+        print "'oathtool' command not found!"
+        print "Install it with: sudo apt-get install oathtool"
+        exit(1)
+
 def gen_otp(key, seq):
+    check_oathtool_binary()
     text = subprocess.check_output([OATHTOOL, '-c', str(seq), key])
     return text.strip()
 
