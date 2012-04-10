@@ -1,0 +1,75 @@
+2fa.py :: A small 2-factor auth tool which works with Ubuntu SSO
+================================================================
+
+NOTE: It is not very secure to keep your shared AES key and sequence
+counter on the same device you use to access Canonical sites while
+travelling! If you use 2fa.py, we strongly recommend installing it only
+on a system you leave at home or a secure server you can access
+remotely.  Alternately, you could keep your 2fa.py data files on a USB
+disk -- plug it in and run 2fa.py when you need a passcode, then unplug
+it afterward.  This achieves nearly the same security as a Yubikey, only
+without having to buy a Yubikey.
+
+
+Initial setup
+-------------
+
+Install 2fa.py and its dependencies:
+
+  - install oathtool (sudo apt-get install oathtool) and make sure you
+    have python 2.7. This means you will need Oneiric or newer.
+
+  - Branch the source from Launchpad: bzr branch lp:~toykeeper/+junk/2fa
+
+  - To install, just link it into your path somewhere.
+    ln -s ~/src/2fa/2fa.py ~/bin/2fa 
+
+Optional: If you would like to use it from a USB disk, create a symlink.
+Replace 'my_usb_disk' with the path your disk normally gets mounted at.
+
+  - mkdir /media/my_usb_disk/.2fa
+
+  - ln -s /media/my_usb_disk/.2fa ~/.2fa
+
+Set up a new profile:
+
+  - In SSO, add a new generic OATH/HOTP device.
+
+  - Create a new profile in 2fa.py. This will happen automatically the
+    first time it is run. Copy/paste the shared AES key from SSO. Here
+    is an example: 
+
+    user @ host> 2fa
+    Usage: 2fa [NAME]
+    Generates the next passcode in the sequence for the NAME profile.
+    (will create a new profile on first use)
+    NAME is optional; will be "default" if not specified.
+    Key and sequence data are stored in ~/.2fa/
+    
+    Creating profile "default".
+    Paste the shared AES key from SSO: DEAD BEEF
+    Your first OTP is: 057490
+
+Then enter the value of the 'first OTP' into SSO.
+
+You can add as many profiles as you like. To use one other than
+'default', simply pass the name to 2fa.py, like '2fa paper' or
+'2fa usb'.
+
+
+Usage
+-----
+
+When SSO asks for a one-time password, simply run 2fa.py and paste the
+output into SSO. The terminal session should look something like this:
+
+  user @ host> 2fa
+  617013
+
+If you are storing your credentials on a USB disk, be sure to plug it in
+first, and unplug it afterward.
+
+This can also be hooked up to other commands if desired, such as a
+text-to-speech program (for the visually-impaired) or a program which
+generates keyboard events (for those who are too lazy to copy/paste the
+passcode). 
