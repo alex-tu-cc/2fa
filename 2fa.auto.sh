@@ -14,6 +14,9 @@
 # Requires the 'xmacro' package in Ubuntu.
 #
 
-sleep 0.5
-xmacroplay-keys :0 $(2fa usb | sed 's/\([0-9]\)/\1 /g;' ; echo Return) \
+PROFILE=usb  # set your default profile here
+if [ x"$1" != x ]; then PROFILE="$1" ; fi
+
+sleep 0.5  # to give the user time to release the hotkey
+xmacroplay-keys :0 $(2fa $PROFILE | sed 's/\([0-9]\)/\1 /g;' ; echo Return) \
   > /dev/null 2>/dev/null
