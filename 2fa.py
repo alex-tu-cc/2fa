@@ -128,7 +128,8 @@ def parse_args(argv):
     When loading a key, '<script_path>/.2fa' will be attempted first
     and, after that, '~/.2fa'"""
     parser = argparse.ArgumentParser(description=description, epilog=epilog)
-    parser.add_argument('profile', metavar='PROFILE', default='default',
+    parser.add_argument('profile', metavar='PROFILE', nargs='?',
+                        default='default',
                         help='Profile name (\'%(default)s\' by default)')
     parser.add_argument('-d', '--directory',
                         help='Base directory to store profile data')
