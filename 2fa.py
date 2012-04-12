@@ -1,73 +1,103 @@
 #!/usr/bin/env python
 
-"""2fa.py, an easy wrapper for oathtool, to generate one-time passwords.
+"""2fa.py, an easy wrapper for oathtool, to generate one-time passcodes.
 Manages AES key storage and sequence counting.
 """
 
 import os
 import subprocess  # Requires Python 2.7
+import argparse
 
 OATHTOOL = 'oathtool'
-KEY_DIR = os.path.join(os.environ['HOME'], '.2fa')
+KEY_DIR_SUFFIX = '.2fa'
+KEY_DIRS = [os.path.join(os.path.realpath(os.path.dirname(__file__)),
+                         KEY_DIR_SUFFIX),
+            os.path.join(os.environ['HOME'], KEY_DIR_SUFFIX)]
+
 
 def main(args):
+    """
+    Generate next one time passcode
+    or create a new profile and generate the first passcode
+    """
     mode = 'otp'
-    keyname = 'default'
-    for a in args:
-        if a.startswith('-'):
-            return usage()
-        else:
-            keyname = a
+    keyname = args.profile
+    directory = args.directory
 
-    try:
-        key, last_seq = load_key(keyname)
-    except IOError:
+    key, last_seq, directory = load_key(keyname, directory)
+    if key is None or last_seq is None:
+        # Create new key file if no data for the profile is found
         mode = 'addkey'
 
     if mode == 'otp':
         print gen_otp(key, last_seq)
-        save_key(keyname, seq=last_seq+1)
+        save_key(keyname, directory, seq=last_seq+1)
 
     elif mode == 'addkey':
-        key, seq = add_key(keyname)
+        key, seq = add_key(keyname, directory)
         if key:
             print 'Your first OTP is: %s' % (gen_otp(key, seq))
-            save_key(keyname, seq=seq+1)
+            save_key(keyname, directory, seq=seq+1)
 
-def usage():
-    print 'Usage: 2fa [NAME]'
-    print 'Generates the next passcode in the sequence for the NAME profile.'
-    print '(will create a new profile on first use)'
-    print 'NAME is optional; will be "default" if not specified.'
-    print 'Key and sequence data are stored in ~/.2fa/'
 
-def load_key(keyname):
-    key = open(os.path.join(KEY_DIR, keyname, 'key')).readline().strip()
-    seq = int(open(os.path.join(KEY_DIR, keyname, 'seq')).readline().strip())
-    return key, seq
+def load_key(keyname, directory):
+    """
+    Load key and sequence data from the profile directory.
+    returns key, seq, key_dir
+    """
+    key = None
+    seq = None
+    if directory is None:
+        key_dirs = KEY_DIRS
+    else:
+        key_dirs = [directory]
 
-def save_key(keyname, key=None, seq=None):
-    if not os.path.exists(KEY_DIR):
-        os.mkdir(KEY_DIR)
-        subprocess.check_call(['chmod', '700', KEY_DIR])
-    if not os.path.exists(os.path.join(KEY_DIR, keyname)):
-        os.mkdir(os.path.join(KEY_DIR, keyname))
+    for key_dir in key_dirs:
+        profile_dir = os.path.join(key_dir, keyname)
+        if os.path.isdir(profile_dir):
+            key_file = os.path.join(profile_dir, 'key')
+            key = open(key_file).readline().strip()
+            seq_file = os.path.join(profile_dir, 'seq')
+            seq = int(open(seq_file).readline().strip())
+            break
+    return key, seq, key_dir
+
+
+def save_key(keyname, directory, key=None, seq=None):
+    """
+    Save key and sequence data to the profile directory
+    """
+    if directory is None:
+        key_dir = KEY_DIRS[-1]
+    else:
+        key_dir = directory
+
+    if not os.path.exists(key_dir):
+        os.mkdir(key_dir, 0700)
+    if not os.path.exists(os.path.join(key_dir, keyname)):
+        os.mkdir(os.path.join(key_dir, keyname))
     if key:
-        open(os.path.join(KEY_DIR, keyname, 'key'), 'w').write(key)
+        open(os.path.join(key_dir, keyname, 'key'), 'w').write(key)
     if seq is not None:
-        open(os.path.join(KEY_DIR, keyname, 'seq'), 'w').write(str(seq))
+        open(os.path.join(key_dir, keyname, 'seq'), 'w').write(str(seq))
 
-def add_key(keyname):
-    usage()
-    print
+
+def add_key(keyname, directory):
+    """
+    Create a new key file based on the key provided by the server
+    """
     print 'Creating profile "%s".' % (keyname)
     key = raw_input('Paste the shared AES key from SSO: ')
     key = key.strip().replace(' ', '')
     seq = 0
-    save_key(keyname, key, seq)
+    save_key(keyname, directory, key=key, seq=seq)
     return key, seq
 
+
 def check_oathtool_binary():
+    """
+    Make sure that oathtool is available
+    """
     try:
         subprocess.check_output(["which", OATHTOOL])
     except subprocess.CalledProcessError:
@@ -75,12 +105,41 @@ def check_oathtool_binary():
         print "Install it with: sudo apt-get install oathtool"
         exit(1)
 
+
 def gen_otp(key, seq):
+    """
+    Generate next one time passcode
+    """
     check_oathtool_binary()
     text = subprocess.check_output([OATHTOOL, '-c', str(seq), key])
     return text.strip()
 
+
+def parse_args(argv):
+    """
+    Parse command line arguments
+    """
+    description = """
+    Generates the next passcode in the sequence for the given profile name
+    (will create a new profile on first use).
+    """
+    epilog = """
+    When creating a new key '~/.2fa' will be used as default directory.
+    When loading a key, '<script_path>/.2fa' will be attempted first
+    and, after that, '~/.2fa'"""
+    parser = argparse.ArgumentParser(description=description, epilog=epilog)
+    parser.add_argument('profile', metavar='PROFILE', default='default',
+                        help='Profile name (\'%(default)s\' by default)')
+    parser.add_argument('-d', '--directory',
+                        help='Base directory to store profile data')
+    args = parser.parse_args(argv)
+    if args.directory:
+        head, tail = os.path.split(args.directory)
+        if tail != KEY_DIR_SUFFIX:
+            args.directory = os.path.join(args.directory, KEY_DIR_SUFFIX)
+    return args
+
 if __name__ == "__main__":
     import sys
-    main(sys.argv[1:])
-
+    args = parse_args(sys.argv[1:])
+    main(args)
