@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-"""2fa.py, an easy wrapper for oathtool, to generate one-time passwords.
+"""2fa.py, an easy wrapper for oathtool, to generate one-time passcodes.
 Manages AES key storage and sequence counting.
 """
 
@@ -17,8 +17,8 @@ KEY_DIRS = [os.path.join(os.path.realpath(os.path.dirname(__file__)),
 
 def main(args):
     """
-    Generate next one time password
-    either from a scratch or from a stored profile key
+    Generate next one time passcode
+    or create a new profile and generate the first passcode
     """
     mode = 'otp'
     keyname = args.profile
@@ -31,18 +31,19 @@ def main(args):
 
     if mode == 'otp':
         print gen_otp(key, last_seq)
-        save_key(keyname, directory, seq=last_seq + 1)
+        save_key(keyname, directory, seq=last_seq+1)
 
     elif mode == 'addkey':
         key, seq = add_key(keyname, directory)
         if key:
             print 'Your first OTP is: %s' % (gen_otp(key, seq))
-            save_key(keyname, directory, seq=seq + 1)
+            save_key(keyname, directory, seq=seq+1)
 
 
 def load_key(keyname, directory):
     """
-    Load key and sequence data from the profile directory
+    Load key and sequence data from the profile directory.
+    returns key, seq, key_dir
     """
     key = None
     seq = None
@@ -107,7 +108,7 @@ def check_oathtool_binary():
 
 def gen_otp(key, seq):
     """
-    Generate next one time password
+    Generate next one time passcode
     """
     check_oathtool_binary()
     text = subprocess.check_output([OATHTOOL, '-c', str(seq), key])
@@ -127,10 +128,10 @@ def parse_args(argv):
     When loading a key, '<script_path>/.2fa' will be attempted first
     and, after that, '~/.2fa'"""
     parser = argparse.ArgumentParser(description=description, epilog=epilog)
-    parser.add_argument('-p', '--profile', default='default',
+    parser.add_argument('profile', metavar='PROFILE', default='default',
                         help='Profile name (\'%(default)s\' by default)')
     parser.add_argument('-d', '--directory',
-                        help='Base directory to store profiles data')
+                        help='Base directory to store profile data')
     args = parser.parse_args(argv)
     if args.directory:
         head, tail = os.path.split(args.directory)
