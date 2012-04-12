@@ -25,6 +25,8 @@ Install 2fa.py and its dependencies:
     ln -s ~/src/2fa/2fa.py ~/bin/2fa 
 
 Optional: If you would like to use it from a USB disk, create a symlink.
+Or just move 2fa.py and ~/.2fa/ to the USB disk.  It will detect that it
+has been moved, and load the data files from there automatically.
 Replace 'my_usb_disk' with the path your disk normally gets mounted at.
 
   - mkdir /media/my_usb_disk/.2fa
@@ -37,15 +39,9 @@ Set up a new profile:
 
   - Create a new profile in 2fa.py. This will happen automatically the
     first time it is run. Copy/paste the shared AES key from SSO. Here
-    is an example: 
+    is an example:
 
     user @ host> 2fa
-    Usage: 2fa [NAME]
-    Generates the next passcode in the sequence for the NAME profile.
-    (will create a new profile on first use)
-    NAME is optional; will be "default" if not specified.
-    Key and sequence data are stored in ~/.2fa/
-    
     Creating profile "default".
     Paste the shared AES key from SSO: DEAD BEEF
     Your first OTP is: 057490
@@ -71,5 +67,11 @@ first, and unplug it afterward.
 
 This can also be hooked up to other commands if desired, such as a
 text-to-speech program (for the visually-impaired) or a program which
-generates keyboard events (for those who are too lazy to copy/paste the
-passcode). 
+generates keyboard events.
+
+The 2fa.auto.sh script can be used to make 2fa.py type in your passcodes
+for you.  Bind a hotkey to run the script, edit the path and profile
+name in the script, and you should have one-keypress passcode entry.
+However, you should only do this if you have your 2fa data files on a
+USB stick that you only plug in when you need to log in.  It's horribly
+insecure otherwise.
