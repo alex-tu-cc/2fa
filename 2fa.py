@@ -30,13 +30,13 @@ def main(args):
         mode = 'addkey'
 
     if mode == 'otp':
-        print gen_otp(key, last_seq)
+        print(gen_otp(key, last_seq))
         save_key(keyname, directory, seq=last_seq+1)
 
     elif mode == 'addkey':
         key, seq = add_key(keyname, directory)
         if key:
-            print 'Your first OTP is: %s' % (gen_otp(key, seq))
+            print('Your first OTP is: %s' % (gen_otp(key, seq)))
             save_key(keyname, directory, seq=seq+1)
 
 
@@ -73,7 +73,7 @@ def save_key(keyname, directory, key=None, seq=None):
         key_dir = directory
 
     if not os.path.exists(key_dir):
-        os.mkdir(key_dir, 0700)
+        os.mkdir(key_dir, 0o700)
     if not os.path.exists(os.path.join(key_dir, keyname)):
         os.mkdir(os.path.join(key_dir, keyname))
     if key:
@@ -86,7 +86,7 @@ def add_key(keyname, directory):
     """
     Create a new key file based on the key provided by the server
     """
-    print 'Creating profile "%s".' % (keyname)
+    print('Creating profile "%s".' % (keyname,))
     key = raw_input('Paste the shared AES key from SSO: ')
     key = key.strip().replace(' ', '')
     seq = 0
@@ -101,8 +101,8 @@ def check_oathtool_binary():
     try:
         subprocess.check_output(["which", OATHTOOL])
     except subprocess.CalledProcessError:
-        print "'oathtool' command not found!"
-        print "Install it with: sudo apt-get install oathtool"
+        print("'oathtool' command not found!")
+        print("Install it with: sudo apt-get install oathtool")
         exit(1)
 
 
@@ -112,7 +112,7 @@ def gen_otp(key, seq):
     """
     check_oathtool_binary()
     text = subprocess.check_output([OATHTOOL, '-c', str(seq), key])
-    return text.strip()
+    return text.strip().decode('utf-8')
 
 
 def parse_args(argv):
