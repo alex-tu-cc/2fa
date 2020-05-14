@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 """2fa.py, an easy wrapper for oathtool, to generate one-time passcodes.
 Manages AES key storage and sequence counting.
@@ -87,7 +87,7 @@ def add_key(keyname, directory):
     Create a new key file based on the key provided by the server
     """
     print('Creating profile "%s".' % (keyname,))
-    key = raw_input('Paste the shared AES key from SSO: ')
+    key = input('Paste the shared AES key from SSO: ')
     key = key.strip().replace(' ', '')
     seq = 0
     save_key(keyname, directory, key=key, seq=seq)
